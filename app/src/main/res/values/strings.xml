@@ -1,0 +1,30 @@
+<resources>
+    <string name="app_name">BImob</string>
+
+    <!--Menu-->
+    <string name="action_settings">Settings</string>
+    <string name="action_search">Search</string>
+    <string name="action_apply">Add</string>
+    <string name="action_pdf">Pdf</string>
+
+    <!--Menu fab-->
+    <string name="action_fab_nova_pessoa_fisica">Nova pessoa física</string>
+    <string name="action_fab_nova_pessoa_juridica">Nova pessoa jurídica</string>
+    <string name="action_fab_novo_imovel">Novo imóvel</string>
+    <string name="action_fab_nova_locação">Nova locação</string>
+
+    <!--Tab-->
+    <string name="action_tab_pessoa">Pessoas</string>
+    <string name="action_tab_imovel">Imóveis</string>
+    <string name="action_tab_locação">Locações</string>
+
+    <!--Tipos de imoveis-->
+    <string-array name="imoveis_tipos_array">
+        <item>Residencial</item>
+        <item>Comercial</item>
+    </string-array>
+
+    <string name="title_activity_pessoa_picker">Escolha uma pessoa</string>
+    <string name="title_activity_imovel_picker">Escolha um imóvel</string>
+
+</resources>
