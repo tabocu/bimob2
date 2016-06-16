@@ -58,7 +58,28 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
                 android:layout_weight="1"
-                android:hint="Valor do aluguel"
+                android:hint="Valor estimado do aluguel"
+                android:singleLine="true"
+                android:background="@android:color/transparent" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_margin="18dp"/>
+
+            <EditText
+                android:id="@+id/valorImovelEditText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_weight="1"
+                android:hint="Valor estimado do imóvel"
                 android:singleLine="true"
                 android:background="@android:color/transparent" />
         </LinearLayout>
@@ -107,7 +128,7 @@
                 android:src="@drawable/bm_tipo_imovel_dark_24dp" />
 
             <Spinner
-                android:id="@+id/tipoEditText"
+                android:id="@+id/tipoSpinner"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"

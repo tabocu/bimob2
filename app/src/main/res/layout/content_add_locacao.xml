@@ -37,10 +37,7 @@
                 android:text="Imóvel"/>
         </LinearLayout>
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="#EEEEEE" />
+        <include layout="@layout/linha_separadora" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -112,10 +109,7 @@
                 android:text="Fiador"/>
         </LinearLayout>
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="#EEEEEE" />
+        <include layout="@layout/linha_separadora" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -189,10 +183,7 @@
 
         </LinearLayout>
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="#EEEEEE" />
+        <include layout="@layout/linha_separadora" />
 
         <LinearLayout
             android:layout_width="match_parent"

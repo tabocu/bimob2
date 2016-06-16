@@ -9,7 +9,7 @@ import br.com.blackseed.bimob.data.DbContract.*;
 
 public class DbHelper extends SQLiteOpenHelper {
 
-    private static final int DATABASE_VERSION = 8;
+    private static final int DATABASE_VERSION = 10;
 
     static final String DATABASE_NAME = "bimob.db";
 
@@ -24,7 +24,9 @@ public class DbHelper extends SQLiteOpenHelper {
                 PessoaEntry._ID                     + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 PessoaEntry.COLUMN_NOME             + " VARCHAR(80), " +
                 PessoaEntry.COLUMN_RAZAO_SOCIAL     + " VARCHAR(80), " +
-                PessoaEntry.COLUMN_CP              + " VARCHAR(14), " +
+                PessoaEntry.COLUMN_CP               + " VARCHAR(14), " +
+                PessoaEntry.COLUMN_RG               + " VARCHAR(20), " +
+                PessoaEntry.COLUMN_ESTADO_CIVIL     + " INTEGER, " +
                 PessoaEntry.COLUMN_IS_FAVORITO      + " BOOLEAN, " +
                 PessoaEntry.COLUMN_IS_PESSOA_FISICA + " BOOLEAN " +
                 ");";
@@ -37,6 +39,7 @@ public class DbHelper extends SQLiteOpenHelper {
                 ImovelEntry.COLUMN_AREA             + " INTEGER, " +
                 ImovelEntry.COLUMN_TIPO             + " INTEGER, " +
                 ImovelEntry.COLUMN_VALOR_ALUGUEL    + " REAL, " +
+                ImovelEntry.COLUMN_VALOR_IMOVEL     + " REAL, " +
                 ImovelEntry.COLUMN_IS_FAVORITO      + " BOOLEAN " +
                 ");";
 

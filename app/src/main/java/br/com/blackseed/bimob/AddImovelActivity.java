@@ -40,19 +40,22 @@ public class AddImovelActivity extends AppCompatActivity implements
     private static final String[] IMOVEL_COLUMNS = {
             DbContract.ImovelEntry.COLUMN_NOME,
             DbContract.ImovelEntry.COLUMN_VALOR_ALUGUEL,
+            DbContract.ImovelEntry.COLUMN_VALOR_IMOVEL,
             DbContract.ImovelEntry.COLUMN_AREA,
             DbContract.ImovelEntry.COLUMN_TIPO
     };
 
     public static final int COL_IMOVEL_NOME          = 0;
     public static final int COL_IMOVEL_VALOR_ALUGUEL = 1;
-    public static final int COL_COLUMN_AREA          = 2;
-    public static final int COL_COLUMN_TIPO          = 3;
+    public static final int COL_IMOVEL_VALOR_IMOVEL  = 2;
+    public static final int COL_COLUMN_AREA          = 3;
+    public static final int COL_COLUMN_TIPO          = 4;
 
     private FloatingActionButton mFab;
 
     private EditText mNomeEditText;
     private EditText mAluguelEditText;
+    private EditText mValorImovelEditText;
     private EditText mAreaEditText;
     private Spinner mTipoSpinner;
 
@@ -71,20 +74,23 @@ public class AddImovelActivity extends AppCompatActivity implements
         // Obtem referencias dos componentes do layout
         mNomeEditText = (EditText) findViewById(R.id.nomeEditText);
         mAluguelEditText = (EditText) findViewById(R.id.valorEditText);
+        mValorImovelEditText = (EditText) findViewById(R.id.valorImovelEditText);
         mAreaEditText = (EditText) findViewById(R.id.areaEditText);
-        mTipoSpinner = (Spinner) findViewById(R.id.tipoEditText);
+        mTipoSpinner = (Spinner) findViewById(R.id.tipoSpinner);
 
         mAluguelEditText.addTextChangedListener(new CurrencyTextWatcher());
+        mValorImovelEditText.addTextChangedListener(new CurrencyTextWatcher());
 
         mAluguelEditText.setRawInputType(InputType.TYPE_CLASS_NUMBER);
+        mValorImovelEditText.setRawInputType(InputType.TYPE_CLASS_NUMBER);
         mAreaEditText.setRawInputType(InputType.TYPE_CLASS_NUMBER);
 
 
         ArrayAdapter<String> dataAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item,
+                R.layout.item_spinner,R.id.itemTextView,
                 getResources().getStringArray(R.array.imoveis_tipos_array));
 
-        dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        dataAdapter.setDropDownViewResource(R.layout.item_spinner);
         mTipoSpinner.setAdapter(dataAdapter);
     }
 
@@ -114,6 +120,10 @@ public class AddImovelActivity extends AppCompatActivity implements
         String valor = mAluguelEditText.getText().toString().replaceAll("\\D", "");
         if(!valor.isEmpty())
             imovelValues.put(DbContract.ImovelEntry.COLUMN_VALOR_ALUGUEL,Float.valueOf(valor)/100.0f);
+
+        String valorImovel = mValorImovelEditText.getText().toString().replaceAll("\\D", "");
+        if(!valorImovel.isEmpty())
+            imovelValues.put(DbContract.ImovelEntry.COLUMN_VALOR_IMOVEL,Float.valueOf(valorImovel)/100.0f);
 
         String area = mAreaEditText.getText().toString().replaceAll("\\D", "");
         if(!area.isEmpty())
@@ -164,6 +174,9 @@ public class AddImovelActivity extends AppCompatActivity implements
 
             float valor = data.getFloat(COL_IMOVEL_VALOR_ALUGUEL);
             mAluguelEditText.setText(String.valueOf(valor));
+
+            float valorImovel = data.getFloat(COL_IMOVEL_VALOR_IMOVEL);
+            mValorImovelEditText.setText(String.valueOf(valorImovel));
 
             int area = data.getInt(COL_COLUMN_AREA);
             mAreaEditText.setText(String.valueOf(area));

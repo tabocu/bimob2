@@ -16,7 +16,9 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -40,7 +42,9 @@ public class AddPessoaFisicaActivity extends AppCompatActivity implements
 
     private static final String[] PESSOA_COLUMNS = {
             DbContract.PessoaEntry.COLUMN_NOME ,
-            DbContract.PessoaEntry.COLUMN_CP
+            DbContract.PessoaEntry.COLUMN_CP,
+            DbContract.PessoaEntry.COLUMN_RG,
+            DbContract.PessoaEntry.COLUMN_ESTADO_CIVIL
     };
 
     private static final String[] TELEFONE_COLUMNS = {
@@ -53,6 +57,8 @@ public class AddPessoaFisicaActivity extends AppCompatActivity implements
 
     public static final int COL_PESSOA_NOME     = 0;
     public static final int COL_PESSOA_CP       = 1;
+    public static final int COL_PESSOA_RG       = 2;
+    public static final int COL_PESSOA_ESTADO_CIVIL = 3;
     public static final int COL_TELEFONE_NUMERO = 0;
     public static final int COL_EMAIL_ENDERECO  = 0;
 
@@ -60,6 +66,8 @@ public class AddPessoaFisicaActivity extends AppCompatActivity implements
 
     private EditText mNomeEditText;
     private EditText mCpfEditText;
+    private EditText mRgEditText;
+    private Spinner mEstadoCivilSpinner;
     private MultiEditView mTelefoneMultiEditView;
     private MultiEditView mEmailMultiEditView;
 
@@ -79,6 +87,8 @@ public class AddPessoaFisicaActivity extends AppCompatActivity implements
         // Obtem referencias dos componentes do layout
         mNomeEditText = (EditText) findViewById(R.id.nomeEditText);
         mCpfEditText = (EditText) findViewById(R.id.cpfEditText);
+        mRgEditText = (EditText) findViewById(R.id.rgEditText);
+        mEstadoCivilSpinner = (Spinner) findViewById(R.id.estadoCivilSpinner);
         mTelefoneMultiEditView = (MultiEditView) findViewById(R.id.telefoneMultiEditView);
         mEmailMultiEditView = (MultiEditView) findViewById(R.id.emailMultiEditView);
 
@@ -96,6 +106,14 @@ public class AddPessoaFisicaActivity extends AppCompatActivity implements
             }
         });
         mCpfEditText.setRawInputType(InputType.TYPE_CLASS_NUMBER);
+
+
+        ArrayAdapter<String> dataAdapter = new ArrayAdapter<>(this,
+                R.layout.item_spinner,R.id.itemTextView,
+                getResources().getStringArray(R.array.estados_civis_array));
+
+        dataAdapter.setDropDownViewResource(R.layout.item_spinner);
+        mEstadoCivilSpinner.setAdapter(dataAdapter);
     }
 
     @Override
@@ -121,6 +139,8 @@ public class AddPessoaFisicaActivity extends AppCompatActivity implements
         ContentValues pessoaValues = new ContentValues();
         pessoaValues.put(DbContract.PessoaEntry.COLUMN_NOME,mNomeEditText.getText().toString());
         pessoaValues.put(DbContract.PessoaEntry.COLUMN_CP,mCpfEditText.getText().toString().replaceAll("\\D", ""));
+        pessoaValues.put(DbContract.PessoaEntry.COLUMN_RG,mRgEditText.getText().toString());
+        pessoaValues.put(DbContract.PessoaEntry.COLUMN_ESTADO_CIVIL,mEstadoCivilSpinner.getSelectedItemPosition());
         pessoaValues.put(DbContract.PessoaEntry.COLUMN_IS_PESSOA_FISICA,true);
         pessoaValues.put(DbContract.PessoaEntry.COLUMN_IS_FAVORITO,false);
 
@@ -209,6 +229,12 @@ public class AddPessoaFisicaActivity extends AppCompatActivity implements
 
                     String cpf = data.getString(COL_PESSOA_CP);
                     mCpfEditText.setText(cpf);
+
+                    String rg = data.getString(COL_PESSOA_RG);
+                    mRgEditText.setText(rg);
+
+                    int estadoCivil = data.getInt(COL_PESSOA_ESTADO_CIVIL);
+                    mEstadoCivilSpinner.setSelection(estadoCivil);
                 }
                 break;
             case 1:
@@ -225,6 +251,7 @@ public class AddPessoaFisicaActivity extends AppCompatActivity implements
                 }
                 mEmailMultiEditView.setTextList(enderecosList);
                 break;
+
             default:
                 break;
         }

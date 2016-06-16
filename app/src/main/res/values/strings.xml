@@ -24,6 +24,17 @@
         <item>Comercial</item>
     </string-array>
 
+    <!--Estados civis-->
+    <string-array name="estados_civis_array">
+        <item>Estado civil</item>
+        <item>Solteiro</item>
+        <item>Casado</item>
+        <item>Divorciado</item>
+        <item>Viuvo</item>
+        <item>Separado</item>
+        <item>Companheiro</item>
+    </string-array>
+
     <string name="title_activity_pessoa_picker">Escolha uma pessoa</string>
     <string name="title_activity_imovel_picker">Escolha um imóvel</string>
 
