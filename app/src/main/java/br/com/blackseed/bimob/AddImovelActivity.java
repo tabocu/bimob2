@@ -28,6 +28,7 @@ import java.util.List;
 import br.com.blackseed.bimob.data.DbContract;
 import br.com.blackseed.bimob.utils.CurrencyTextWatcher;
 import br.com.blackseed.bimob.utils.MaskTextWatcher;
+import br.com.blackseed.bimob.utils.UnitTextWatcher;
 
 public class AddImovelActivity extends AppCompatActivity implements
         View.OnClickListener,
@@ -78,6 +79,7 @@ public class AddImovelActivity extends AppCompatActivity implements
         mAreaEditText = (EditText) findViewById(R.id.areaEditText);
         mTipoSpinner = (Spinner) findViewById(R.id.tipoSpinner);
 
+        mAreaEditText.addTextChangedListener(new UnitTextWatcher(" m²", mAreaEditText));
         mAluguelEditText.addTextChangedListener(new CurrencyTextWatcher());
         mValorImovelEditText.addTextChangedListener(new CurrencyTextWatcher());
 
@@ -119,11 +121,11 @@ public class AddImovelActivity extends AppCompatActivity implements
 
         String valor = mAluguelEditText.getText().toString().replaceAll("\\D", "");
         if(!valor.isEmpty())
-            imovelValues.put(DbContract.ImovelEntry.COLUMN_VALOR_ALUGUEL,Float.valueOf(valor)/100.0f);
+            imovelValues.put(DbContract.ImovelEntry.COLUMN_VALOR_ALUGUEL,Integer.valueOf(valor));
 
         String valorImovel = mValorImovelEditText.getText().toString().replaceAll("\\D", "");
         if(!valorImovel.isEmpty())
-            imovelValues.put(DbContract.ImovelEntry.COLUMN_VALOR_IMOVEL,Float.valueOf(valorImovel)/100.0f);
+            imovelValues.put(DbContract.ImovelEntry.COLUMN_VALOR_IMOVEL,Integer.valueOf(valorImovel));
 
         String area = mAreaEditText.getText().toString().replaceAll("\\D", "");
         if(!area.isEmpty())
@@ -172,10 +174,10 @@ public class AddImovelActivity extends AppCompatActivity implements
             String nome = data.getString(COL_IMOVEL_NOME);
             mNomeEditText.setText(nome);
 
-            float valor = data.getFloat(COL_IMOVEL_VALOR_ALUGUEL);
+            int valor = data.getInt(COL_IMOVEL_VALOR_ALUGUEL);
             mAluguelEditText.setText(String.valueOf(valor));
 
-            float valorImovel = data.getFloat(COL_IMOVEL_VALOR_IMOVEL);
+            int valorImovel = data.getInt(COL_IMOVEL_VALOR_IMOVEL);
             mValorImovelEditText.setText(String.valueOf(valorImovel));
 
             int area = data.getInt(COL_COLUMN_AREA);

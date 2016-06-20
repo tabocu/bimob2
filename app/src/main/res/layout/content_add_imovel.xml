@@ -102,13 +102,14 @@
 
             <EditText
                 android:id="@+id/areaEditText"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
-                android:layout_weight="1"
                 android:hint="Área do imóvel"
                 android:singleLine="true"
                 android:background="@android:color/transparent" />
+
+
         </LinearLayout>
 
         <View
