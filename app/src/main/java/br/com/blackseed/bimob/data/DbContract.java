@@ -14,6 +14,7 @@ public class DbContract {
     public static final String PATH_PESSOA          = "pessoa";
     public static final String PATH_FILTER_PESSOA   = "pessoa_filter";
     public static final String PATH_IMOVEL          = "imovel";
+    public static final String PATH_FOTO            = "foto";
     public static final String PATH_FILTER_IMOVEL   = "imovel_filter";
     public static final String PATH_TELEFONE        = "telefone";
     public static final String PATH_EMAIL           = "email";
@@ -79,6 +80,35 @@ public class DbContract {
         }
     }
 
+    public static final class FotoEntry implements BaseColumns {
+
+        public static final Uri CONTENT_URI =
+                BASE_CONTENT_URI.buildUpon().appendPath(PATH_FOTO).build();
+
+        public static final String CONTENT_TYPE =
+                ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_FOTO;
+        public static final String CONTENT_ITEM_TYPE =
+                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_FOTO;
+
+        public static final String TABLE_NAME       = "foto";
+        public static final String COLUMN_IMOVEL_ID = "foto_imovel_id";
+        public static final String COLUMN_PESSOA_ID = "foto_pessoa_id";
+        public static final String COLUMN_PATH      = "foto_path";
+        public static final String COLUMN_THUMB     = "foto_thumb";
+        public static final String COLUMN_PRIMARY   = "foto_primary";
+
+
+        public static Uri buildFotoUri(long id) {
+            return ContentUris.withAppendedId(CONTENT_URI, id);
+        }
+
+        public static Uri buildFotoOfTableUri(long id, String table){
+            return ContentUris.withAppendedId(CONTENT_URI.buildUpon().appendPath(table).build(),id);
+        }
+    }
+
+
+
     public static final class TelefoneEntry implements BaseColumns{
 
         public static final  Uri CONTENT_URI =
@@ -100,8 +130,8 @@ public class DbContract {
             return ContentUris.withAppendedId(CONTENT_URI,id);
         }
 
-        public static Uri buildTelefoneOfPessoaUri(long pessoaId){
-            return ContentUris.withAppendedId(CONTENT_URI.buildUpon().appendPath(PessoaEntry.TABLE_NAME).build(),pessoaId);
+        public static Uri buildTelefoneOfTableUri(long id, String table){
+            return ContentUris.withAppendedId(CONTENT_URI.buildUpon().appendPath(table).build(),id);
         }
     }
 
@@ -126,8 +156,8 @@ public class DbContract {
             return ContentUris.withAppendedId(CONTENT_URI,id);
         }
 
-        public static Uri buildEmailOfPessoaUri(long pessoaId){
-            return ContentUris.withAppendedId(CONTENT_URI.buildUpon().appendPath(PessoaEntry.TABLE_NAME).build(),pessoaId);
+        public static Uri buildEmailOfTableUri(long id, String table){
+            return ContentUris.withAppendedId(CONTENT_URI.buildUpon().appendPath(table).build(),id);
         }
     }
 

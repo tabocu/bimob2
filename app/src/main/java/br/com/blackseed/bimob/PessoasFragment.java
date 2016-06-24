@@ -12,6 +12,8 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.SimpleCursorAdapter;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.text.TextUtils;
 import android.util.Log;
@@ -24,36 +26,63 @@ import android.view.ViewGroup;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import br.com.blackseed.bimob.adapter.ImovelAdapterX;
 import br.com.blackseed.bimob.adapter.PessoaAdapter;
+import br.com.blackseed.bimob.adapter.PessoaAdapterX;
 import br.com.blackseed.bimob.data.DbContract.*;
 
 import br.com.blackseed.bimob.data.DbContract;
 import br.com.blackseed.bimob.data.DbProvider;
 
 
-public class PessoasFragment extends ListFragment
-        implements SearchView.OnQueryTextListener, SearchView.OnCloseListener,
+public class PessoasFragment extends Fragment implements
+        PessoaAdapterX.OnPessoaClickListener,
+        SearchView.OnQueryTextListener,
+        SearchView.OnCloseListener,
         LoaderManager.LoaderCallbacks<Cursor> {
+
+    private static String[] PESSOA_COLUMNS = {
+            PessoaEntry.TABLE_NAME + "." + PessoaEntry._ID,
+            PessoaEntry.TABLE_NAME + "." + PessoaEntry.COLUMN_NOME,
+            PessoaEntry.TABLE_NAME + "." + PessoaEntry.COLUMN_RAZAO_SOCIAL,
+            FotoEntry.TABLE_NAME   + "." + FotoEntry.COLUMN_THUMB
+    };
+
+    RecyclerView pessoaRecyclerView;
+
+    RecyclerView.LayoutManager layoutManager;
+    PessoaAdapterX pessoaAdapter;
 
     OnPessoaClickListener mPessoaClickListener;
 
-    PessoaAdapter mAdapter;
     SearchView mSearchView;
     String mCurFilter;
+
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View v = inflater.inflate(R.layout.fragment_pessoa, container, false);
+
+        pessoaRecyclerView = (RecyclerView) v.findViewById(R.id.pessoaRecyclerView);
+
+        return v;
+    }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        setEmptyText("Não há pessoas cadastradas");
+        pessoaRecyclerView.setHasFixedSize(true);
+
+        layoutManager = new LinearLayoutManager(getContext());
+        pessoaRecyclerView.setLayoutManager(layoutManager);
 
         setHasOptionsMenu(true);
 
-        mAdapter = new PessoaAdapter(getContext(),null);
+        pessoaAdapter = new PessoaAdapterX(getContext(),null,this);
+        pessoaRecyclerView.setAdapter(pessoaAdapter);
 
-        setListAdapter(mAdapter);
-
-        setListShown(false);
 
         getLoaderManager().initLoader(0, null, this);
     }
@@ -66,6 +95,9 @@ public class PessoasFragment extends ListFragment
             throw new ClassCastException(context.toString() + " must implement OnPessoaClickListener");
         }
     }
+
+    @Override
+    public void pessoaClick(long id) { mPessoaClickListener.onPessoaClicked(id); }
 
     public static class MySearchView extends SearchView {
 
@@ -121,11 +153,6 @@ public class PessoasFragment extends ListFragment
         return true;
     }
 
-    @Override
-    public void onListItemClick(ListView l, View v, int position, long id) {
-        mPessoaClickListener.onPessoaClicked(l,v,position,id);
-    }
-
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         Uri baseUri;
         if (mCurFilter != null) {
@@ -135,28 +162,26 @@ public class PessoasFragment extends ListFragment
         baseUri = DbContract.PessoaEntry.CONTENT_URI;
         }
 
-        return new CursorLoader(getActivity(), baseUri,
-                null,null,null,
+        return new CursorLoader(
+                getActivity(),
+                baseUri,
+                PESSOA_COLUMNS,
+                null,
+                null,
                 PessoaEntry.COLUMN_NOME + " ASC");
     }
 
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        pessoaAdapter.swapCursor(data);
 
-        mAdapter.swapCursor(data);
-
-        if (isResumed()) {
-            setListShown(true);
-        } else {
-            setListShownNoAnimation(true);
-        }
     }
 
     public void onLoaderReset(Loader<Cursor> loader) {
-        mAdapter.swapCursor(null);
+        pessoaAdapter.swapCursor(null);
     }
 
     public interface OnPessoaClickListener {
-        void onPessoaClicked(ListView l, View v, int position, long id);
+        void onPessoaClicked(long id);
     }
 
 }

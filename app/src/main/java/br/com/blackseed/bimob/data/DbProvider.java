@@ -8,7 +8,12 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
+import android.os.ParcelFileDescriptor;
+import android.support.annotation.Nullable;
 import android.util.Log;
+
+import br.com.blackseed.bimob.data.DbContract.*;
+import java.io.FileNotFoundException;
 
 public class DbProvider extends ContentProvider {
 
@@ -20,7 +25,6 @@ public class DbProvider extends ContentProvider {
     static final int PESSOA_WITH_ADRESS     = 102;
     static final int PESSOA_ID_WITH_ADRESS  = 103;
     static final int PESSOA_FILTER          = 110;
-
 
     static final int IMOVEL                 = 200;
     static final int IMOVEL_ID              = 201;
@@ -37,29 +41,10 @@ public class DbProvider extends ContentProvider {
     static final int LOCACAO                = 500;
     static final int LOCACAO_ID             = 501;
 
-
-
-
-    private static final SQLiteQueryBuilder sLocacaoQueryBuilder;
-
-    static{
-        sLocacaoQueryBuilder = new SQLiteQueryBuilder();
-
-        sLocacaoQueryBuilder.setTables(
-                        DbContract.PessoaEntry.TABLE_NAME + " , " +
-                        DbContract.LocacaoEntry.TABLE_NAME + " , " +
-                        DbContract.ImovelEntry.TABLE_NAME +
-                        " ON " + DbContract.LocacaoEntry.TABLE_NAME +
-                        "." + DbContract.LocacaoEntry.COLUMN_IMOVEL_ID +
-                        " = " + DbContract.ImovelEntry.TABLE_NAME +
-                        "." + DbContract.ImovelEntry._ID +
-                        " AND " + DbContract.LocacaoEntry.TABLE_NAME +
-                                "." + DbContract.LocacaoEntry.COLUMN_IMOVEL_ID +
-                                " = " + DbContract.ImovelEntry.TABLE_NAME +
-                                "." + DbContract.ImovelEntry._ID);
-    }
-
-
+    static final int FOTO                   = 600;
+    static final int FOTO_ID                = 601;
+    static final int FOTO_OF_IMOVEL         = 602;
+    static final int FOTO_OF_PESSOA         = 603;
 
     static UriMatcher buildUriMatcher() {
 
@@ -81,16 +66,48 @@ public class DbProvider extends ContentProvider {
         matcher.addURI(authority, DbContract.PATH_FILTER_IMOVEL + "/*",     IMOVEL_FILTER);
 
         matcher.addURI(authority, DbContract.PATH_TELEFONE,          TELEFONE);
-        matcher.addURI(authority, DbContract.PATH_TELEFONE + "/*/#", TELEFONE_OF_PESSOA);
+        matcher.addURI(authority, DbContract.PATH_TELEFONE + "/" +
+                        DbContract.PessoaEntry.TABLE_NAME + "/#",   TELEFONE_OF_PESSOA);
 
         matcher.addURI(authority, DbContract.PATH_EMAIL,             EMAIL);
-        matcher.addURI(authority, DbContract.PATH_EMAIL + "/*/#",    EMAIL_OF_PESSOA);
+        matcher.addURI(authority, DbContract.PATH_EMAIL + "/" +
+                        DbContract.PessoaEntry.TABLE_NAME + "/#",      EMAIL_OF_PESSOA);
 
         matcher.addURI(authority, DbContract.PATH_LOCACAO,           LOCACAO);
-        matcher.addURI(authority, DbContract.PATH_LOCACAO + "/#",  LOCACAO_ID);
+        matcher.addURI(authority, DbContract.PATH_LOCACAO + "/#",    LOCACAO_ID);
+
+        matcher.addURI(authority, DbContract.PATH_FOTO,              FOTO);
+        matcher.addURI(authority, DbContract.PATH_FOTO + "/#",       FOTO_ID);
+        matcher.addURI(authority, DbContract.PATH_FOTO + "/" +
+                        DbContract.ImovelEntry.TABLE_NAME + "/#",       FOTO_OF_IMOVEL);
+        matcher.addURI(authority, DbContract.PATH_FOTO + "/" +
+                        DbContract.PessoaEntry.TABLE_NAME + "/#",       FOTO_OF_PESSOA);
 
         return matcher;
     }
+
+    private static final String IMOVEL_TABLE =
+                                ImovelEntry.TABLE_NAME + " LEFT JOIN " + FotoEntry.TABLE_NAME +
+                                " ON " +
+                                ImovelEntry.TABLE_NAME + "." + ImovelEntry._ID +
+                                " = " +
+                                FotoEntry.TABLE_NAME + "." + FotoEntry.COLUMN_IMOVEL_ID;
+
+    private static final String IMOVEL_WHERE = " ( " +
+                            FotoEntry.TABLE_NAME + "." + FotoEntry.COLUMN_IMOVEL_ID + " IS null OR " +
+                            FotoEntry.TABLE_NAME + "." + FotoEntry.COLUMN_PRIMARY + " IS 1 ) ";
+
+    private static final String PESSOA_TABLE =
+            PessoaEntry.TABLE_NAME + " LEFT JOIN " + FotoEntry.TABLE_NAME +
+                    " ON " +
+                    PessoaEntry.TABLE_NAME + "." + PessoaEntry._ID +
+                    " = " +
+                    FotoEntry.TABLE_NAME + "." + FotoEntry.COLUMN_PESSOA_ID;
+
+    private static final String PESSOA_WHERE = " ( " +
+            FotoEntry.TABLE_NAME + "." + FotoEntry.COLUMN_PESSOA_ID + " IS null OR " +
+            FotoEntry.TABLE_NAME + "." + FotoEntry.COLUMN_PRIMARY + " IS 1 ) ";
+
 
     @Override
     public boolean onCreate() {
@@ -140,6 +157,15 @@ public class DbProvider extends ContentProvider {
             case LOCACAO_ID:
                 return DbContract.LocacaoEntry.CONTENT_ITEM_TYPE;
 
+            case FOTO:
+                return DbContract.FotoEntry.CONTENT_TYPE;
+            case FOTO_ID:
+                return DbContract.FotoEntry.CONTENT_ITEM_TYPE;
+            case FOTO_OF_IMOVEL:
+                return DbContract.FotoEntry.CONTENT_TYPE;
+            case FOTO_OF_PESSOA:
+                return DbContract.FotoEntry.CONTENT_TYPE;
+
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
@@ -151,12 +177,23 @@ public class DbProvider extends ContentProvider {
         Log.v("DB_PROVIDER","query");
 
         SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
+        Cursor retCursor;
 
         switch (sUriMatcher.match(uri)) {
 
             case PESSOA: {
-                queryBuilder.setTables(DbContract.PessoaEntry.TABLE_NAME);
-                break;
+                SQLiteDatabase db = mOpenHelper.getReadableDatabase();
+                Cursor cursor = db.query(
+                        PESSOA_TABLE,
+                        projection,
+                        PESSOA_WHERE,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null);
+                cursor.setNotificationUri(getContext().getContentResolver(), uri);
+                return cursor;
             }
             case PESSOA_ID: {
                 queryBuilder.setTables(DbContract.PessoaEntry.TABLE_NAME);
@@ -168,11 +205,8 @@ public class DbProvider extends ContentProvider {
                 return db.query(true,
                         DbContract.PessoaEntry.TABLE_NAME,
                         null,
-                        DbContract.PessoaEntry.COLUMN_NOME + " LIKE ? OR " +
-                        DbContract.PessoaEntry.COLUMN_RAZAO_SOCIAL + " LIKE ? ",
-                        new String[] {
-                                "%"+ uri.getLastPathSegment()+ "%" ,
-                                "%"+ uri.getLastPathSegment()+ "%" },
+                        PESSOA_WHERE + " AND " + DbContract.PessoaEntry.COLUMN_NOME + " LIKE ?",
+                        new String[] {"%"+ uri.getLastPathSegment()+ "%" },
                         null,
                         null,
                         null,
@@ -180,8 +214,18 @@ public class DbProvider extends ContentProvider {
             }
 
             case IMOVEL: {
-                queryBuilder.setTables(DbContract.ImovelEntry.TABLE_NAME);
-                break;
+                SQLiteDatabase db = mOpenHelper.getReadableDatabase();
+                Cursor cursor = db.query(
+                        IMOVEL_TABLE,
+                        projection,
+                        IMOVEL_WHERE,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null);
+                cursor.setNotificationUri(getContext().getContentResolver(), uri);
+                return cursor;
             }
             case IMOVEL_ID: {
                 queryBuilder.setTables(DbContract.ImovelEntry.TABLE_NAME);
@@ -194,7 +238,7 @@ public class DbProvider extends ContentProvider {
                 return db.query(true,
                         DbContract.ImovelEntry.TABLE_NAME,
                         null,
-                        DbContract.ImovelEntry.COLUMN_NOME + " LIKE ?",
+                        IMOVEL_WHERE + " AND " + DbContract.ImovelEntry.COLUMN_NOME + " LIKE ?",
                         new String[] {"%"+ uri.getLastPathSegment()+ "%" },
                         null,
                         null,
@@ -228,17 +272,17 @@ public class DbProvider extends ContentProvider {
 
                 queryBuilder.setTables(
 
-                        DbContract.LocacaoEntry.TABLE_NAME  + " LEFT JOIN " +
-                                DbContract.ImovelEntry.TABLE_NAME + " ON "  +
-                                DbContract.LocacaoEntry.TABLE_NAME + "." +
-                                DbContract.LocacaoEntry.COLUMN_IMOVEL_ID + " = " +
-                                DbContract.ImovelEntry.TABLE_NAME + "." +
-                                DbContract.ImovelEntry._ID + " LEFT JOIN " +
-                                DbContract.PessoaEntry.TABLE_NAME + " ON " +
-                                DbContract.LocacaoEntry.TABLE_NAME + "." +
-                                DbContract.LocacaoEntry.COLUMN_LOCADOR_ID + " = " +
-                                DbContract.PessoaEntry.TABLE_NAME + "." +
-                                DbContract.PessoaEntry._ID);
+                                LocacaoEntry.TABLE_NAME  + " LEFT JOIN " +
+                                ImovelEntry.TABLE_NAME + " ON "  +
+                                LocacaoEntry.TABLE_NAME + "." +
+                                LocacaoEntry.COLUMN_IMOVEL_ID + " = " +
+                                ImovelEntry.TABLE_NAME + "." +
+                                ImovelEntry._ID + " LEFT JOIN " +
+                                PessoaEntry.TABLE_NAME + " ON " +
+                                LocacaoEntry.TABLE_NAME + "." +
+                                LocacaoEntry.COLUMN_LOCADOR_ID + " = " +
+                                PessoaEntry.TABLE_NAME + "." +
+                                PessoaEntry._ID);
 
                 break;
             }
@@ -248,11 +292,37 @@ public class DbProvider extends ContentProvider {
                 break;
             }
 
+            case FOTO: {
+                queryBuilder.setTables(DbContract.FotoEntry.TABLE_NAME);
+                break;
+            }
+
+            case FOTO_ID: {
+                queryBuilder.setTables( DbContract.FotoEntry.TABLE_NAME);
+                queryBuilder.appendWhere(DbContract.FotoEntry._ID + " = " + uri.getLastPathSegment());
+                break;
+            }
+
+            case FOTO_OF_IMOVEL: {
+                queryBuilder.setTables(DbContract.FotoEntry.TABLE_NAME);
+                queryBuilder.appendWhere(DbContract.FotoEntry.COLUMN_IMOVEL_ID +
+                        " = " + uri.getLastPathSegment());
+                break;
+            }
+
+            case FOTO_OF_PESSOA: {
+                queryBuilder.setTables(DbContract.FotoEntry.TABLE_NAME);
+                queryBuilder.appendWhere(DbContract.FotoEntry.COLUMN_PESSOA_ID +
+                        " = " + uri.getLastPathSegment());
+                break;
+            }
+
+
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
 
-        Cursor retCursor = queryBuilder.query(mOpenHelper.getReadableDatabase(),
+        retCursor = queryBuilder.query(mOpenHelper.getReadableDatabase(),
                 projection,
                 selection,
                 selectionArgs,
@@ -266,7 +336,7 @@ public class DbProvider extends ContentProvider {
 
     @Override
     public Uri insert(Uri uri, ContentValues values) {
-        Log.v("DB_PROVIDER","insert");
+
         final SQLiteDatabase db = mOpenHelper.getWritableDatabase();
         final int match = sUriMatcher.match(uri);
         Uri returnUri;
@@ -297,10 +367,16 @@ public class DbProvider extends ContentProvider {
                 returnUri = DbContract.LocacaoEntry.buildLocacaoUri(_id);
                 break;
             }
+            case FOTO: {
+                long _id = db.insert(DbContract.FotoEntry.TABLE_NAME, null, values);
+                returnUri = DbContract.FotoEntry.buildFotoUri(_id);
+                break;
+            }
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
         getContext().getContentResolver().notifyChange(uri, null);
+        Log.v("DB_PROVIDER","insert");
         return returnUri;
     }
 
@@ -421,4 +497,6 @@ public class DbProvider extends ContentProvider {
         mOpenHelper.close();
         super.shutdown();
     }
+
+
 }

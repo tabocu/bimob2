@@ -29,7 +29,7 @@ public class ImovelPickerActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onImovelClicked(ListView l, View v, int position, long id) {
+    public void onImovelClicked(long id) {
         Intent intent = new Intent();
         Bundle bundle = new Bundle();
         bundle.putParcelable(IMOVEL_URI, DbContract.ImovelEntry.buildImovelUri(id));

@@ -22,4 +22,8 @@
         <item name="android:textColor">@color/colorPrimaryDark</item>
     </style>
 
+    <style name="CardTitle" parent="@android:style/TextAppearance.Medium">
+        <item name="android:textColor">#BBBBBB</item>
+    </style>
+
 </resources>

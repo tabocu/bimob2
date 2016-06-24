@@ -31,7 +31,7 @@ public class PessoaPickerActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onPessoaClicked(ListView l, View v, int position, long id) {
+    public void onPessoaClicked(long id) {
         Intent intent = new Intent();
         Bundle bundle = new Bundle();
         bundle.putParcelable(PESSOA_URI, DbContract.PessoaEntry.buildPessoaUri(id));

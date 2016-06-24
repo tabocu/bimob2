@@ -5,45 +5,82 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.SimpleCursorAdapter;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ListView;
 
+import org.androidannotations.annotations.EFragment;
+import org.androidannotations.annotations.ViewById;
+
 import br.com.blackseed.bimob.adapter.ImovelAdapter;
+import br.com.blackseed.bimob.adapter.ImovelAdapterX;
+import br.com.blackseed.bimob.data.DbContract;
 import br.com.blackseed.bimob.data.DbContract.*;
 
-public class ImoveisFragment extends ListFragment
-        implements SearchView.OnQueryTextListener, SearchView.OnCloseListener,
+public class ImoveisFragment extends Fragment implements
+        ImovelAdapterX.OnImovelClickListener,
+        SearchView.OnQueryTextListener,
+        SearchView.OnCloseListener,
         LoaderManager.LoaderCallbacks<Cursor> {
+
+    private static final String[] IMOVEL_COLUMNS = {
+            ImovelEntry.TABLE_NAME + "." + ImovelEntry._ID,
+            ImovelEntry.TABLE_NAME + "." + ImovelEntry.COLUMN_NOME,
+            ImovelEntry.TABLE_NAME + "." + ImovelEntry.COLUMN_AREA,
+            ImovelEntry.TABLE_NAME + "." + ImovelEntry.COLUMN_TIPO,
+            FotoEntry.TABLE_NAME   + "." + FotoEntry.COLUMN_THUMB
+    };
+
+    RecyclerView imovelRecyclerView;
+
+    RecyclerView.LayoutManager layoutManager;
+    ImovelAdapterX imovelAdapter;
 
     OnImovelClickListener mImovelClickListener;
 
-    ImovelAdapter mAdapter;
     SearchView mSearchView;
     String mCurFilter;
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View v = inflater.inflate(R.layout.fragment_imovel, container, false);
+
+        imovelRecyclerView = (RecyclerView) v.findViewById(R.id.imovelRecyclerView);
+
+        return v;
+    }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        setEmptyText("Não há imóveis cadastrados");
+        imovelRecyclerView.setHasFixedSize(true);
+
+        layoutManager = new LinearLayoutManager(getContext());
+        imovelRecyclerView.setLayoutManager(layoutManager);
 
         setHasOptionsMenu(true);
 
-        mAdapter = new ImovelAdapter(getContext(),null);
-        setListAdapter(mAdapter);
+        imovelAdapter = new ImovelAdapterX(getContext(),null,this);
+        imovelRecyclerView.setAdapter(imovelAdapter);
 
-        setListShown(false);
 
         getLoaderManager().initLoader(0, null, this);
     }
@@ -55,6 +92,11 @@ public class ImoveisFragment extends ListFragment
         } catch (ClassCastException e) {
             throw new ClassCastException(context.toString() + " must implement OnImovelClickListener");
         }
+    }
+
+    @Override
+    public void imovelClick(long id) {
+        mImovelClickListener.onImovelClicked(id);
     }
 
     public static class MySearchView extends SearchView {
@@ -111,38 +153,34 @@ public class ImoveisFragment extends ListFragment
         return true;
     }
 
-    @Override
-    public void onListItemClick(ListView l, View v, int position, long id) {
-        mImovelClickListener.onImovelClicked(l,v,position,id);
-    }
-
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        Log.v("IMOVEIS: ","onCreateLoader()");
+
         Uri baseUri;
-       if (mCurFilter != null) {
+        if (mCurFilter != null) {
            baseUri = Uri.withAppendedPath(ImovelEntry.CONTENT_FILTER_URI,
                     Uri.encode(mCurFilter));
         } else {
             baseUri = ImovelEntry.CONTENT_URI;
         }
-        return new CursorLoader(getActivity(), baseUri,
-                null,null,null,null);
+        return new CursorLoader(
+                getActivity(),
+                baseUri,
+                IMOVEL_COLUMNS,
+                null,
+                null,
+                null);
     }
 
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        mAdapter.swapCursor(data);
-
-        if (isResumed()) {
-            setListShown(true);
-        } else {
-            setListShownNoAnimation(true);
-        }
+        imovelAdapter.swapCursor(data);
     }
 
     public void onLoaderReset(Loader<Cursor> loader) {
-        mAdapter.swapCursor(null);
+        imovelAdapter.swapCursor(null);
     }
 
     public interface OnImovelClickListener {
-        void onImovelClicked(ListView l, View v, int position, long id);
+        void onImovelClicked(long id);
     }
 }

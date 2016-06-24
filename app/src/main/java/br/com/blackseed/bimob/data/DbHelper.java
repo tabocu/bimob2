@@ -9,7 +9,7 @@ import br.com.blackseed.bimob.data.DbContract.*;
 
 public class DbHelper extends SQLiteOpenHelper {
 
-    private static final int DATABASE_VERSION = 11;
+    private static final int DATABASE_VERSION = 17;
 
     static final String DATABASE_NAME = "bimob.db";
 
@@ -42,6 +42,21 @@ public class DbHelper extends SQLiteOpenHelper {
                 ImovelEntry.COLUMN_VALOR_IMOVEL     + " INTEGER, " +
                 ImovelEntry.COLUMN_IS_FAVORITO      + " BOOLEAN " +
                 ");";
+
+        final String SQL_CREATE_FOTO_TABLE          = "CREATE TABLE " +
+                FotoEntry.TABLE_NAME                + " (" +
+                FotoEntry._ID                       + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                FotoEntry.COLUMN_PATH               + " VARCHAR(80), " +
+                FotoEntry.COLUMN_THUMB              + " BLOB, " +
+                FotoEntry.COLUMN_IMOVEL_ID          + " INTEGER, " +
+                FotoEntry.COLUMN_PESSOA_ID          + " INTEGER, " +
+                FotoEntry.COLUMN_PRIMARY            + " BOOLEAN, " +
+
+                " FOREIGN KEY (" + FotoEntry.COLUMN_IMOVEL_ID + ") REFERENCES " +
+                FotoEntry.TABLE_NAME + " (" + ImovelEntry._ID + ")" +
+                " FOREIGN KEY (" + FotoEntry.COLUMN_PESSOA_ID + ") REFERENCES " +
+                FotoEntry.TABLE_NAME + " (" + PessoaEntry._ID + "));";
+
 
         final String SQL_CREATE_TELEFONE_TABLE      = "CREATE TABLE " +
                 TelefoneEntry.TABLE_NAME            + " (" +
@@ -100,6 +115,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
         db.execSQL(SQL_CREATE_PESSOA_TABLE);
         db.execSQL(SQL_CREATE_IMOVEL_TABLE);
+        db.execSQL(SQL_CREATE_FOTO_TABLE);
         db.execSQL(SQL_CREATE_TELEFONE_TABLE);
         db.execSQL(SQL_CREATE_EMAIL_TABLE);
         db.execSQL(SQL_CREATE_LOCACAO_TABLE);
@@ -110,6 +126,7 @@ public class DbHelper extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("DROP TABLE IF EXISTS " + PessoaEntry.TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + ImovelEntry.TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + FotoEntry.TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + TelefoneEntry.TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + EmailEntry.TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + LocacaoEntry.TABLE_NAME);

@@ -136,7 +136,7 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onPessoaClicked(ListView l, View v, int position, long id) {
+    public void onPessoaClicked(long id) {
         Bundle args = new Bundle();
         Intent intent;
         Uri pessoaUri = DbContract.PessoaEntry.buildPessoaUri(id);
@@ -149,13 +149,16 @@ public class MainActivity extends AppCompatActivity implements
         c.moveToFirst();
         if(c.getInt(0) == 1) {
             args.putParcelable(AddPessoaFisicaActivity.PESSOA_FISICA_URI, DbContract.PessoaEntry.buildPessoaUri(id));
-            args.putParcelable(AddPessoaFisicaActivity.TELEFONES_URI, DbContract.TelefoneEntry.buildTelefoneOfPessoaUri(id));
-            args.putParcelable(AddPessoaFisicaActivity.EMAILS_URI, DbContract.EmailEntry.buildEmailOfPessoaUri(id));
+            args.putParcelable(AddPessoaFisicaActivity.TELEFONES_URI, DbContract.TelefoneEntry.buildTelefoneOfTableUri(id, DbContract.PessoaEntry.TABLE_NAME));
+            args.putParcelable(AddPessoaFisicaActivity.EMAILS_URI, DbContract.EmailEntry.buildEmailOfTableUri(id, DbContract.PessoaEntry.TABLE_NAME));
+            args.putParcelable(AddPessoaFisicaActivity.FOTO_URI, DbContract.FotoEntry.buildFotoOfTableUri(id, DbContract.PessoaEntry.TABLE_NAME));
+
             intent = new Intent(this, AddPessoaFisicaActivity.class);
         } else {
             args.putParcelable(AddPessoaJuridicaActivity.PESSOA_JURIDICA_URI, DbContract.PessoaEntry.buildPessoaUri(id));
-            args.putParcelable(AddPessoaJuridicaActivity.TELEFONES_URI, DbContract.TelefoneEntry.buildTelefoneOfPessoaUri(id));
-            args.putParcelable(AddPessoaJuridicaActivity.EMAILS_URI, DbContract.EmailEntry.buildEmailOfPessoaUri(id));
+            args.putParcelable(AddPessoaJuridicaActivity.TELEFONES_URI, DbContract.TelefoneEntry.buildTelefoneOfTableUri(id, DbContract.PessoaEntry.TABLE_NAME));
+            args.putParcelable(AddPessoaJuridicaActivity.EMAILS_URI, DbContract.EmailEntry.buildEmailOfTableUri(id, DbContract.PessoaEntry.TABLE_NAME));
+            args.putParcelable(AddPessoaJuridicaActivity.FOTO_URI, DbContract.FotoEntry.buildFotoOfTableUri(id, DbContract.PessoaEntry.TABLE_NAME));
             intent = new Intent(this, AddPessoaJuridicaActivity.class);
         }
 
@@ -164,10 +167,11 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onImovelClicked(ListView l, View v, int position, long id) {
+    public void onImovelClicked(long id) {
         Bundle args = new Bundle();
         Intent intent = new Intent(this, AddImovelActivity.class);
         args.putParcelable(AddImovelActivity.IMOVEL_URI, DbContract.ImovelEntry.buildImovelUri(id));
+        args.putParcelable(AddImovelActivity.FOTO_URI, DbContract.FotoEntry.buildFotoOfTableUri(id, DbContract.ImovelEntry.TABLE_NAME));
         intent.putExtras(args);
         startActivity(intent);
     }

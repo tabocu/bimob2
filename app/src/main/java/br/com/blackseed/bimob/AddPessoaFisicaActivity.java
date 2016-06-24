@@ -4,10 +4,16 @@ import android.app.LoaderManager;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.CursorLoader;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -18,27 +24,35 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 import br.com.blackseed.bimob.components.MultiEditView;
 import br.com.blackseed.bimob.data.DbContract;
 import br.com.blackseed.bimob.utils.MaskTextWatcher;
+import br.com.blackseed.bimob.utils.Utils;
 
 public class AddPessoaFisicaActivity extends AppCompatActivity implements
         View.OnClickListener,
+        DialogInterface.OnClickListener,
         LoaderManager.LoaderCallbacks<Cursor> {
 
     public static final String PESSOA_FISICA_URI = "pessoa_fisica_uri";
+    public static final String FOTO_URI   = "foto_uri";
     public static final String TELEFONES_URI = "telefones_uri";
     public static final String EMAILS_URI = "emails_uri";
 
     static final int PESSOA_LOADER   = 0;
     static final int TELEFONE_LOADER = 1;
     static final int EMAIL_LOADER    = 2;
+    static final int FOTO_LOADER     = 3;
+
 
     private static final String[] PESSOA_COLUMNS = {
             DbContract.PessoaEntry.COLUMN_NOME ,
@@ -55,14 +69,29 @@ public class AddPessoaFisicaActivity extends AppCompatActivity implements
             DbContract.EmailEntry.COLUMN_ENDERECO
     };
 
-    public static final int COL_PESSOA_NOME     = 0;
-    public static final int COL_PESSOA_CP       = 1;
-    public static final int COL_PESSOA_RG       = 2;
+    private static final String[] FOTO_COLUMNS = {
+            DbContract.FotoEntry.COLUMN_THUMB
+    };
+
+    public static final int COL_PESSOA_NOME         = 0;
+    public static final int COL_PESSOA_CP           = 1;
+    public static final int COL_PESSOA_RG           = 2;
     public static final int COL_PESSOA_ESTADO_CIVIL = 3;
-    public static final int COL_TELEFONE_NUMERO = 0;
-    public static final int COL_EMAIL_ENDERECO  = 0;
+
+    public static final int COL_TELEFONE_NUMERO     = 0;
+
+    public static final int COL_EMAIL_ENDERECO      = 0;
+
+    public static final int COL_FOTO_THUMB          = 0;
+
+    static final int REQUEST_CODE_CAMERA  = 0;
+    static final int REQUEST_CODE_GALLERY = 1;
+    static final int REQUEST_CODE_PLACE   = 2;
 
     private FloatingActionButton mFab;
+
+    private ImageView mPhotoImageView;
+    private Bitmap mBitmap;
 
     private EditText mNomeEditText;
     private EditText mCpfEditText;
@@ -77,6 +106,7 @@ public class AddPessoaFisicaActivity extends AppCompatActivity implements
         getLoaderManager().initLoader(PESSOA_LOADER,getIntent().getExtras(),this);
         getLoaderManager().initLoader(TELEFONE_LOADER,getIntent().getExtras(),this);
         getLoaderManager().initLoader(EMAIL_LOADER,getIntent().getExtras(),this);
+        getLoaderManager().initLoader(FOTO_LOADER,getIntent().getExtras(),this);
         setContentView(R.layout.activity_add_pessoa_fisica);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -85,6 +115,7 @@ public class AddPessoaFisicaActivity extends AppCompatActivity implements
         mFab.setOnClickListener(this);
 
         // Obtem referencias dos componentes do layout
+        mPhotoImageView = (ImageView) findViewById(R.id.photoImageView);
         mNomeEditText = (EditText) findViewById(R.id.nomeEditText);
         mCpfEditText = (EditText) findViewById(R.id.cpfEditText);
         mRgEditText = (EditText) findViewById(R.id.rgEditText);
@@ -171,12 +202,29 @@ public class AddPessoaFisicaActivity extends AppCompatActivity implements
             emailValues.put(DbContract.EmailEntry.COLUMN_ENDERECO, email);
             getContentResolver().insert(DbContract.EmailEntry.CONTENT_URI,emailValues);
         }
+
+        if(mBitmap != null) {
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            Utils.getResizedBitmap(mBitmap, 500).compress(Bitmap.CompressFormat.JPEG, 80, stream);
+            byte[] byteArray = stream.toByteArray();
+
+            ContentValues fotoValues = new ContentValues();
+            fotoValues.put(DbContract.FotoEntry.COLUMN_PESSOA_ID, pessoaId);
+            fotoValues.put(DbContract.FotoEntry.COLUMN_THUMB, byteArray);
+            fotoValues.put(DbContract.FotoEntry.COLUMN_PRIMARY, true);
+
+            Uri fotoUri;
+            if (getIntent().getExtras() == null) {
+                fotoUri = getContentResolver().insert(DbContract.FotoEntry.CONTENT_URI, fotoValues);
+            }
+        }
+
     }
 
     @Override
     public void onClick(View v) {
         if(v == mFab) {
-            Toast.makeText(this,"Camera",Toast.LENGTH_SHORT).show();
+            selectImage();
         }
     }
 
@@ -214,6 +262,16 @@ public class AddPessoaFisicaActivity extends AppCompatActivity implements
                     null,
                     null
             );
+        } else if(id == FOTO_LOADER && args != null) {
+            Uri uri = args.getParcelable(FOTO_URI);
+            return new CursorLoader(
+                    this,
+                    uri,
+                    FOTO_COLUMNS,
+                    null,
+                    null,
+                    null
+            );
         } else {
             return null;
         }
@@ -222,7 +280,7 @@ public class AddPessoaFisicaActivity extends AppCompatActivity implements
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         switch (loader.getId()) {
-            case 0:
+            case PESSOA_LOADER:
                 if (data != null && data.moveToFirst()) {
                     String nome = data.getString(COL_PESSOA_NOME);
                     mNomeEditText.setText(nome);
@@ -237,19 +295,25 @@ public class AddPessoaFisicaActivity extends AppCompatActivity implements
                     mEstadoCivilSpinner.setSelection(estadoCivil);
                 }
                 break;
-            case 1:
+            case TELEFONE_LOADER:
                 List<String> numerosList = new ArrayList<>();
                 while (data != null && data.moveToNext()) {
                     numerosList.add(data.getString(COL_TELEFONE_NUMERO));
                 }
                 mTelefoneMultiEditView.setTextList(numerosList);
                 break;
-            case 2:
+            case EMAIL_LOADER:
                 List<String> enderecosList = new ArrayList<>();
                 while (data != null && data.moveToNext()) {
                     enderecosList.add(data.getString(COL_EMAIL_ENDERECO));
                 }
                 mEmailMultiEditView.setTextList(enderecosList);
+                break;
+            case FOTO_LOADER:
+                if (data != null && data.moveToFirst()) {
+                    byte[] blob = data.getBlob(COL_FOTO_THUMB);
+                    setBitmap(BitmapFactory.decodeByteArray(blob , 0, blob.length));
+                }
                 break;
 
             default:
@@ -259,4 +323,78 @@ public class AddPessoaFisicaActivity extends AppCompatActivity implements
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) { }
+
+    public void selectImage() {
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+        CharSequence[] options = getResources().getStringArray(R.array.origem_imagem_array);
+        builder.setItems(options,this);
+        builder.show();
+    }
+
+    @Override
+    public void onClick(DialogInterface dialog, int item) {
+        if(item == 0) {
+            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            File f = new File(android.os.Environment.getExternalStorageDirectory(), "temp.jpg");
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(f));
+            startActivityForResult(intent, REQUEST_CODE_CAMERA);
+        } else if(item == 1) {
+            Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            startActivityForResult(intent, REQUEST_CODE_GALLERY);
+        }
+    }
+
+    private void setBitmap(Bitmap bitmap) {
+        if (bitmap != null) {
+            mBitmap = bitmap;
+            mPhotoImageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            mPhotoImageView.setImageBitmap(Utils.getResizedBitmap(mBitmap,500));
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if(requestCode == REQUEST_CODE_CAMERA) {
+            if (resultCode == RESULT_OK) {
+                File f = new File(Environment.getExternalStorageDirectory(), "temp.jpg");
+                try {
+                    BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
+
+                    setBitmap(BitmapFactory.decodeFile(f.getAbsolutePath(),bitmapOptions));
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } else {
+
+            }
+        } else if(requestCode == REQUEST_CODE_GALLERY) {
+            if (resultCode == RESULT_OK) {
+                Uri selectedImage = data.getData();
+
+                Cursor c = getContentResolver().query(
+                        selectedImage,
+                        new String[]{MediaStore.Images.Media.DATA},
+                        null,
+                        null,
+                        null);
+
+                c.moveToFirst();
+                String picturePath = c.getString(0);
+                c.close();
+                setBitmap(BitmapFactory.decodeFile(picturePath));
+            } else {
+
+            }
+        } else if (requestCode == REQUEST_CODE_PLACE) {
+            if (resultCode == RESULT_OK) {
+
+            } else {
+
+            }
+        }
+    }
+
+
+
 }

@@ -35,7 +35,15 @@
         <item>Companheiro</item>
     </string-array>
 
+    <!--Origem imagem-->
+    <string-array name="origem_imagem_array">
+        <item>Câmera</item>
+        <item>Galeria</item>
+    </string-array>
+
     <string name="title_activity_pessoa_picker">Escolha uma pessoa</string>
     <string name="title_activity_imovel_picker">Escolha um imóvel</string>
+    <string name="menu_item_gallery">Galeria</string>
+    <string name="menu_item_camera">Câmera</string>
 
 </resources>
